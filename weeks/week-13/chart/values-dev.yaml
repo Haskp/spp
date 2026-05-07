@@ -1,0 +1,6 @@
+replicaCount: 1
+image:
+  repository: items-svc-s01
+  tag: "dev"
+service:
+  port: 8281

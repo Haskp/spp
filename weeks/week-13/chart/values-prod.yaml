@@ -1,0 +1,6 @@
+replicaCount: 3
+image:
+  repository: items-svc-s01
+  tag: "prod"
+service:
+  port: 8281

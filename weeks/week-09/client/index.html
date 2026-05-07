@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>bookings-s01 | WebRTC Chat</title>
+</head>
+<body>
+  <h1>WebRTC DataChannel Chat</h1>
+  <p>Откройте эту страницу в двух вкладках, затем нажмите Подключиться только в одной из них.</p>
+
+  <button id="connectBtn">Подключиться</button>
+  <input id="messageInput" type="text" placeholder="Введите сообщение">
+  <button id="sendBtn">Отправить</button>
+
+  <pre id="log"></pre>
+
+  <script>
+    const SIGNALING_URL = "ws://localhost:8765";
+    const logEl = document.getElementById("log");
+    const connectBtn = document.getElementById("connectBtn");
+    const sendBtn = document.getElementById("sendBtn");
+    const messageInput = document.getElementById("messageInput");
+
+    const ws = new WebSocket(SIGNALING_URL);
+    const peer = new RTCPeerConnection({
+      iceServers: [{ urls: "stun:stun.l.google.com:19302" }]
+    });
+
+    let channel;
+
+    function log(message) {
+      logEl.textContent += message + "\n";
+    }
+
+    function setupChannel(dc) {
+      channel = dc;
+      channel.onopen = () => log("DataChannel opened");
+      channel.onmessage = (event) => log("Peer: " + event.data);
+      channel.onclose = () => log("DataChannel closed");
+    }
+
+    peer.onicecandidate = (event) => {
+      if (event.candidate && ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: "candidate", candidate: event.candidate }));
+      }
+    };
+
+    peer.ondatachannel = (event) => {
+      setupChannel(event.channel);
+    };
+
+    ws.onopen = () => log("Connected to signaling server");
+
+    ws.onmessage = async (event) => {
+      const msg = JSON.parse(event.data);
+
+      if (msg.type === "offer") {
+        await peer.setRemoteDescription(msg.offer);
+        const answer = await peer.createAnswer();
+        await peer.setLocalDescription(answer);
+        ws.send(JSON.stringify({ type: "answer", answer }));
+      } else if (msg.type === "answer") {
+        await peer.setRemoteDescription(msg.answer);
+      } else if (msg.type === "candidate") {
+        try {
+          await peer.addIceCandidate(msg.candidate);
+        } catch (err) {
+          log("ICE error: " + err);
+        }
+      }
+    };
+
+    connectBtn.onclick = async () => {
+      const dc = peer.createDataChannel("chat");
+      setupChannel(dc);
+
+      const offer = await peer.createOffer();
+      await peer.setLocalDescription(offer);
+      ws.send(JSON.stringify({ type: "offer", offer }));
+      log("Offer sent");
+    };
+
+    sendBtn.onclick = () => {
+      const text = messageInput.value.trim();
+      if (!text || !channel || channel.readyState !== "open") return;
+      channel.send(text);
+      log("You: " + text);
+      messageInput.value = "";
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package tickets.v1;
+
+service TicketsService {
+  rpc GetTicket (GetTicketRequest) returns (TicketResponse);
+  rpc CreateTicket (CreateTicketRequest) returns (TicketResponse);
+}
+
+message GetTicketRequest {
+  int32 id = 1;
+}
+
+message CreateTicketRequest {
+  string status = 1;
+}
+
+message TicketResponse {
+  int32 id = 1;
+  string status = 2;
+}

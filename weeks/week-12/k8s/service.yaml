@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: reviews-service
+  labels:
+    app: reviews-app
+spec:
+  selector:
+    app: reviews-app
+  ports:
+    - name: http
+      protocol: TCP
+      port: 8169
+      targetPort: 8169
+  type: ClusterIP

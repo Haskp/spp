@@ -1,0 +1,26 @@
+version: '3.9'
+services:
+  bookings-svc-s01:
+    image: bookings-svc-s01:latest
+    container_name: bookings-svc-s01
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8292/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - app-net
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      - app-net
+  gateway:
+    image: nginx:alpine
+    depends_on:
+      - bookings-svc-s01
+    networks:
+      - app-net
+networks:
+  app-net:
+    driver: bridge

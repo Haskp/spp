@@ -1,0 +1,6 @@
+replicaCount: 1
+image:
+  repository: items-svc-s01
+  tag: "latest"
+service:
+  port: 8281

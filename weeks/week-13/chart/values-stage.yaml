@@ -1,0 +1,6 @@
+replicaCount: 2
+image:
+  repository: items-svc-s01
+  tag: "stage"
+service:
+  port: 8281
